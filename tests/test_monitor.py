@@ -132,7 +132,8 @@ class TestRunMonitor(unittest.TestCase):
             OSError("cycle 1 error"),
             (50.0, None, None, None),   # cycle 2 succeeds
         ])
-        sleep = _sleep_raises_after(1)
+        # sleep raises KeyboardInterrupt only on the 2nd call (after the ok cycle)
+        sleep = _sleep_raises_after(2)
 
         with patch('main.log_info'), patch('main.log_error'), patch('main.display'):
             run_monitor(interval=1, _collect=collect,
@@ -161,6 +162,29 @@ class TestRunMonitor(unittest.TestCase):
             any("Syrixin Monitor" in s for s in printed),
             "Expected 'Syrixin Monitor' in at least one print call"
         )
+
+
+    # ------------------------------------------------------------------
+    # Interval validation — sleep is called even after an error cycle
+    # ------------------------------------------------------------------
+
+    def test_sleep_called_after_exception_cycle(self):
+        """_sleep is called even when the cycle raises, preventing log storms."""
+        collect = MagicMock(side_effect=[
+            OSError("boom"),
+            (50.0, None, None, None),
+        ])
+        sleep = _sleep_raises_after(2)
+
+        with patch('main.log_info'), patch('main.log_error'), patch('main.display'):
+            run_monitor(interval=3, _collect=collect,
+                        _check=MagicMock(return_value=[]),
+                        _sleep=sleep, _clear=MagicMock())
+
+        # sleep must have been called twice (once after error, once after ok cycle)
+        self.assertEqual(sleep.call_count, 2)
+        for call in sleep.call_args_list:
+            self.assertEqual(call.args[0], 3)
 
 
 if __name__ == "__main__":

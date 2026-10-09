@@ -50,13 +50,12 @@ def collect_metrics(log_err=log_error, _battery_status=battery_status):
 
 
 def check_alerts(system: SystemInfo, log_warn=log_warning) -> list[str]:
-    """Verifica limites e emite avisos. Retorna lista de mensagens geradas."""
-    alerts = []
+    """Verifica limites e emite avisos. Retorna lista de mensagens geradas.
 
-    cpu_str = format_cpu(system.cpu)
-    ram_str = format_ram(system.ram)
-    disk_str = format_disk(system.disk)
-    battery_str = format_battery(system.battery, system.battery_status)
+    Each metric is formatted only when its threshold is exceeded,
+    avoiding unnecessary work when all values are within normal range.
+    """
+    alerts = []
 
     if system.battery is None:
         msg = "Battery not available or not detected."
@@ -64,22 +63,22 @@ def check_alerts(system: SystemInfo, log_warn=log_warning) -> list[str]:
         alerts.append(msg)
 
     if system.cpu is not None and system.cpu > 90:
-        msg = f"High CPU usage: {cpu_str}"
+        msg = f"High CPU usage: {format_cpu(system.cpu)}"
         log_warn(msg)
         alerts.append(msg)
 
     if system.ram is not None and system.ram.percent > 85:
-        msg = f"High RAM usage: {ram_str}"
+        msg = f"High RAM usage: {format_ram(system.ram)}"
         log_warn(msg)
         alerts.append(msg)
 
     if system.disk is not None and system.disk.percent > 90:
-        msg = f"Disk almost full: {disk_str}"
+        msg = f"Disk almost full: {format_disk(system.disk)}"
         log_warn(msg)
         alerts.append(msg)
 
     if system.battery is not None and system.battery.percent < 20 and not system.battery.power_plugged:
-        msg = f"Low battery: {battery_str}"
+        msg = f"Low battery: {format_battery(system.battery, system.battery_status)}"
         log_warn(msg)
         alerts.append(msg)
 
@@ -127,6 +126,7 @@ def run_monitor(
                 raise
             except Exception as e:
                 log_error(f"Unexpected error during monitoring cycle: {e}")
+                _sleep(interval)
     except KeyboardInterrupt:
         log_info("Monitor stopped by user.")
 
@@ -135,7 +135,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Syrixin system monitor")
     parser.add_argument(
         "--interval", type=int, default=5,
-        help="Refresh interval in seconds (default: 5)"
+        help="Refresh interval in seconds (default: 5, minimum: 1)"
     )
     args = parser.parse_args()
+    if args.interval < 1:
+        parser.error("--interval must be a positive integer (minimum: 1)")
     run_monitor(interval=args.interval)
