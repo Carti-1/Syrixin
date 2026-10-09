@@ -13,3 +13,4 @@ def battery_status(battery):
             return "Charging"
         else:
             return "On battery"
+    return None

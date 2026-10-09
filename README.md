@@ -53,6 +53,24 @@ Battery: 87% / Charging
 
 ---
 
+## Continuous Monitoring
+
+Run the monitor so it refreshes automatically every N seconds:
+
+```bash
+# Default interval: 5 seconds
+python main.py
+
+# Custom interval: 10 seconds
+python main.py --interval 10
+```
+
+The terminal clears each cycle and shows a timestamp header. The monitor
+updates every N seconds until you press **Ctrl+C**, at which point it exits
+gracefully and logs the stop event.
+
+---
+
 ## Running Tests
 
 ```bash
@@ -83,7 +101,8 @@ Syrixin/
 │   ├── test_formatter.py
 │   ├── test_system_info.py
 │   ├── test_alerts.py
-│   └── test_failures.py
+│   ├── test_failures.py
+│   └── test_monitor.py
 └── logs/
     ├── logger.py         # Logging configuration
     └── syrixin.log       # Generated log file

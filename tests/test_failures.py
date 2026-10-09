@@ -93,13 +93,24 @@ class TestCollectMetrics(unittest.TestCase):
 
     def test_one_failure_does_not_prevent_other_metrics(self):
         """A CPU failure does not stop RAM, disk, or battery from being collected."""
+        from types import SimpleNamespace
+        dummy_ram = SimpleNamespace(total=16 * (1024 ** 3), percent=50.0)
+        dummy_disk = SimpleNamespace(
+            used=100 * (1024 ** 3), total=500 * (1024 ** 3), percent=20.0
+        )
+        dummy_battery = SimpleNamespace(percent=80.0, power_plugged=True)
+
         log_err = MagicMock()
-        with patch('monitor.cpu.psutil.cpu_percent', side_effect=OSError('CPU error')):
+        with patch('monitor.cpu.psutil.cpu_percent', side_effect=OSError('CPU error')), \
+             patch('monitor.memory.psutil.virtual_memory', return_value=dummy_ram), \
+             patch('monitor.disk.psutil.disk_usage', return_value=dummy_disk), \
+             patch('monitor.battery.psutil.sensors_battery', return_value=dummy_battery):
             cpu, ram, disk, battery = collect_metrics(log_err=log_err)
+
         self.assertIsNone(cpu)
-        # The other three are still attempted and should not be None
-        # (unless the environment itself lacks them; we just verify log_err was
-        #  called exactly once — only for CPU)
+        self.assertIs(ram, dummy_ram)
+        self.assertIs(disk, dummy_disk)
+        self.assertIs(battery, dummy_battery)
         log_err.assert_called_once()
 
 

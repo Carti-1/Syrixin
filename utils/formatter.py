@@ -1,3 +1,5 @@
+from models.system_info import SystemInfo
+
 
 def format_cpu(cpu):
     if cpu is None:
@@ -21,3 +23,11 @@ def format_battery(battery, status):
     if battery is None:
         return "N/A"
     return f"{battery.percent}% / {status}"
+
+
+def display(system: SystemInfo) -> None:
+    """Print the four formatted metric lines for a SystemInfo snapshot."""
+    print("CPU:", format_cpu(system.cpu))
+    print("RAM:", format_ram(system.ram))
+    print("Disk:", format_disk(system.disk))
+    print("Battery:", format_battery(system.battery, system.battery_status))
