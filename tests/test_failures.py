@@ -46,7 +46,9 @@ class TestMonitorFailures(unittest.TestCase):
                 get_battery()
 
     def test_check_alerts_cpu_none_raises_type_error(self):
-        """check_alerts raises TypeError when cpu is None (None > 90 is not valid in Python 3)."""
+        """check_alerts raises TypeError at the cpu > 90 comparison.
+        format_cpu(None) succeeds silently (returns "None%") before that point,
+        so the crash happens at system.cpu > 90, not during formatting."""
         ram = SimpleNamespace(total=16 * (1024 ** 3), percent=50.0)
         disk = SimpleNamespace(used=100 * (1024 ** 3), total=500 * (1024 ** 3), percent=50.0)
         battery = SimpleNamespace(percent=80.0, power_plugged=True)
