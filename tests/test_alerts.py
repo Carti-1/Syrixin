@@ -161,7 +161,7 @@ class TestBatteryAlerts(unittest.TestCase):
         warn = MagicMock()
         system = _make_system_no_battery()
         alerts = check_alerts(system, log_warn=warn)
-        missing = [a for a in alerts if "not available" in a or "not detected" in a]
+        missing = [a for a in alerts if "Battery not" in a]
         self.assertEqual(len(missing), 1)
 
     def test_no_battery_does_not_trigger_low_battery_alert(self):
@@ -185,6 +185,37 @@ class TestNoAlerts(unittest.TestCase):
         alerts = check_alerts(system, log_warn=warn)
         self.assertEqual(alerts, [])
         warn.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# None metrics — no exceptions when a metric could not be collected
+# ---------------------------------------------------------------------------
+
+class TestNoneMetrics(unittest.TestCase):
+
+    def test_cpu_none_does_not_raise(self):
+        """check_alerts does not raise when cpu=None; skips CPU threshold."""
+        warn = MagicMock()
+        system = _make_system_no_battery()
+        system.cpu = None
+        result = check_alerts(system, log_warn=warn)
+        self.assertIsInstance(result, list)
+
+    def test_ram_none_does_not_raise(self):
+        """check_alerts does not raise when ram=None; skips RAM threshold."""
+        warn = MagicMock()
+        system = _make_system_no_battery()
+        system.ram = None
+        result = check_alerts(system, log_warn=warn)
+        self.assertIsInstance(result, list)
+
+    def test_disk_none_does_not_raise(self):
+        """check_alerts does not raise when disk=None; skips disk threshold."""
+        warn = MagicMock()
+        system = _make_system_no_battery()
+        system.disk = None
+        result = check_alerts(system, log_warn=warn)
+        self.assertIsInstance(result, list)
 
 
 if __name__ == "__main__":

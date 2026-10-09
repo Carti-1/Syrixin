@@ -1,7 +1,11 @@
 """
 Documents how each component behaves when psutil raises errors
-or receives malformed input. These tests verify current behavior
-without changing any implementation.
+or receives malformed input.
+
+Classes:
+  TestCollectorFailures   — collector functions still propagate OSError
+  TestCheckAlertsFailures — check_alerts handles None metrics gracefully
+  TestFormatterFailures   — formatter raises AttributeError for malformed objects
 """
 
 import unittest
@@ -17,7 +21,11 @@ from main import check_alerts
 from models.system_info import SystemInfo
 
 
-class TestMonitorFailures(unittest.TestCase):
+# ---------------------------------------------------------------------------
+# Collector-level failures — collectors still propagate exceptions unchanged
+# ---------------------------------------------------------------------------
+
+class TestCollectorFailures(unittest.TestCase):
 
     def test_cpu_os_error_propagates(self):
         """get_cpu_use propagates OSError from psutil.cpu_percent (no try/except)."""
@@ -38,23 +46,33 @@ class TestMonitorFailures(unittest.TestCase):
                 get_disk_use()
 
     def test_battery_os_error_propagates(self):
-        """get_battery propagates OSError from psutil.sensors_battery (no try/except).
-        If this test fails because get_battery now handles OSError, update accordingly.
-        """
+        """get_battery propagates OSError from psutil.sensors_battery (no try/except)."""
         with patch('monitor.battery.psutil.sensors_battery', side_effect=OSError('Battery error')):
             with self.assertRaises(OSError):
                 get_battery()
 
-    def test_check_alerts_cpu_none_raises_type_error(self):
-        """check_alerts raises TypeError at the cpu > 90 comparison.
-        format_cpu(None) succeeds silently (returns "None%") before that point,
-        so the crash happens at system.cpu > 90, not during formatting."""
+
+# ---------------------------------------------------------------------------
+# check_alerts failures — None metrics must not raise
+# ---------------------------------------------------------------------------
+
+class TestCheckAlertsFailures(unittest.TestCase):
+
+    def test_check_alerts_cpu_none_does_not_raise(self):
+        """check_alerts does not raise when cpu=None; returns a list."""
         ram = SimpleNamespace(total=16 * (1024 ** 3), percent=50.0)
         disk = SimpleNamespace(used=100 * (1024 ** 3), total=500 * (1024 ** 3), percent=50.0)
         battery = SimpleNamespace(percent=80.0, power_plugged=True)
         system = SystemInfo(cpu=None, ram=ram, disk=disk, battery=battery, battery_status='Charging')
-        with self.assertRaises(TypeError):
-            check_alerts(system)
+        result = check_alerts(system)
+        self.assertIsInstance(result, list)
+
+
+# ---------------------------------------------------------------------------
+# Formatter failures — malformed objects (not None) still raise
+# ---------------------------------------------------------------------------
+
+class TestFormatterFailures(unittest.TestCase):
 
     def test_format_ram_missing_total_raises_attribute_error(self):
         """format_ram raises AttributeError when the object has no 'total' attribute."""

@@ -33,6 +33,9 @@ class TestFormatCpu(unittest.TestCase):
     def test_hundred(self):
         self.assertEqual(format_cpu(100.0), "100.0%")
 
+    def test_none_returns_na(self):
+        self.assertEqual(format_cpu(None), "N/A")
+
 
 class TestFormatRam(unittest.TestCase):
 
@@ -45,6 +48,9 @@ class TestFormatRam(unittest.TestCase):
         result = format_ram(_ram(16, 50.0))
         self.assertIn("16.00 GB", result)
         self.assertIn("50.0%", result)
+
+    def test_none_returns_na(self):
+        self.assertEqual(format_ram(None), "N/A")
 
 
 class TestFormatDisk(unittest.TestCase):
@@ -59,6 +65,9 @@ class TestFormatDisk(unittest.TestCase):
         result = format_disk(_disk(1, 10, 10.0))
         self.assertIn("1.00 GB", result)
         self.assertIn("10.00 GB", result)
+
+    def test_none_returns_na(self):
+        self.assertEqual(format_disk(None), "N/A")
 
 
 class TestFormatBattery(unittest.TestCase):

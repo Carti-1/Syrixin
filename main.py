@@ -21,17 +21,17 @@ def check_alerts(system: SystemInfo, log_warn=log_warning) -> list[str]:
         log_warn(msg)
         alerts.append(msg)
 
-    if system.cpu > 90:
+    if system.cpu is not None and system.cpu > 90:
         msg = f"High CPU usage: {cpu_str}"
         log_warn(msg)
         alerts.append(msg)
 
-    if system.ram.percent > 85:
+    if system.ram is not None and system.ram.percent > 85:
         msg = f"High RAM usage: {ram_str}"
         log_warn(msg)
         alerts.append(msg)
 
-    if system.disk.percent > 90:
+    if system.disk is not None and system.disk.percent > 90:
         msg = f"Disk almost full: {disk_str}"
         log_warn(msg)
         alerts.append(msg)
@@ -47,10 +47,30 @@ def check_alerts(system: SystemInfo, log_warn=log_warning) -> list[str]:
 if __name__ == "__main__":
     log_info("Syrixin started — beginning system data collection.")
 
-    cpu = get_cpu_use()
-    ram = get_ram_use()
-    disk = get_disk_use()
-    battery = get_battery()
+    try:
+        cpu = get_cpu_use()
+    except Exception as e:
+        log_error(f"Failed to collect CPU data: {e}")
+        cpu = None
+
+    try:
+        ram = get_ram_use()
+    except Exception as e:
+        log_error(f"Failed to collect RAM data: {e}")
+        ram = None
+
+    try:
+        disk = get_disk_use()
+    except Exception as e:
+        log_error(f"Failed to collect disk data: {e}")
+        disk = None
+
+    try:
+        battery = get_battery()
+    except Exception as e:
+        log_error(f"Failed to collect battery data: {e}")
+        battery = None
+
     status = battery_status(battery)
 
     system = SystemInfo(cpu, ram, disk, battery, status)
