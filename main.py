@@ -12,12 +12,15 @@ from utils.formatter import format_cpu, format_ram, format_disk, format_battery,
 from logs.logger import log_info, log_warning, log_error
 
 
-def collect_metrics(log_err=log_error):
+def collect_metrics(log_err=log_error, _battery_status=battery_status):
     """Collect each system metric independently, storing None on failure.
 
     Returns a tuple (cpu, ram, disk, battery).  A failed collector stores
     None for that metric and calls log_err with the error message; the
     remaining collectors still run.
+
+    _battery_status is accepted but not called here; it exists so callers
+    that inject collect_metrics can also inject battery_status for testing.
     """
     try:
         cpu = get_cpu_use()
@@ -89,34 +92,41 @@ def run_monitor(
     _check=None,
     _sleep=None,
     _clear=None,
+    _battery_status=None,
 ) -> None:
     """Loop: clear → timestamp → collect → display → check_alerts → sleep.
 
     The underscore-prefixed parameters exist for testing only; production
     code never passes them.
     """
-    _collect = _collect if _collect is not None else collect_metrics
-    _check   = _check   if _check   is not None   else check_alerts
-    _sleep   = _sleep   if _sleep   is not None   else time.sleep
-    _clear   = _clear   if _clear   is not None   else (
+    _collect         = _collect         if _collect         is not None else collect_metrics
+    _check           = _check           if _check           is not None else check_alerts
+    _sleep           = _sleep           if _sleep           is not None else time.sleep
+    _clear           = _clear           if _clear           is not None else (
         lambda: os.system('cls' if os.name == 'nt' else 'clear')
     )
+    _battery_status  = _battery_status  if _battery_status  is not None else battery_status
 
     log_info("Syrixin started — beginning system data collection.")
     try:
         while True:
-            _clear()
-            ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            print(f"=== Syrixin Monitor — {ts} ===")
+            try:
+                _clear()
+                ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                print(f"=== Syrixin Monitor — {ts} ===")
 
-            cpu, ram, disk, battery = _collect()
-            status = battery_status(battery)
-            system = SystemInfo(cpu, ram, disk, battery, status)
+                cpu, ram, disk, battery = _collect()
+                status = _battery_status(battery)
+                system = SystemInfo(cpu, ram, disk, battery, status)
 
-            display(system)
-            _check(system)
+                display(system)
+                _check(system)
 
-            _sleep(interval)
+                _sleep(interval)
+            except KeyboardInterrupt:
+                raise
+            except Exception as e:
+                log_error(f"Unexpected error during monitoring cycle: {e}")
     except KeyboardInterrupt:
         log_info("Monitor stopped by user.")
 
