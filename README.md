@@ -1,74 +1,108 @@
 # Syrixin — Intelligent System Monitor
 
-Syrixin é um monitor de sistema inteligente que acompanha em tempo real os recursos do seu computador — CPU, memória, disco e bateria — com logs automáticos e alertas integrados. Projetado para evoluir com inteligência artificial, permitindo análise preditiva e detecção de anomalias.
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+Syrixin is a lightweight Python system monitor that tracks CPU, RAM, disk, and battery usage in real time. It logs metrics automatically and raises configurable alerts when resources exceed defined thresholds.
 
 ---
 
-## Funcionalidades
+## Features
 
-- Monitoramento de uso de CPU
-- Monitoramento de memória RAM
-- Monitoramento de espaço em disco
-- Monitoramento de bateria e status de carregamento
-- Registro automático em log com timestamp
-- Alertas automáticos para situações críticas
-
----
-
-## Estrutura do Projeto
-
-```
-Syrixin/
-├── main.py               # Ponto de entrada
-├── monitor/
-│   ├── cpu.py            # Coleta de CPU
-│   ├── memory.py         # Coleta de RAM
-│   ├── disk.py           # Coleta de disco
-│   └── battery.py        # Coleta de bateria
-├── models/
-│   └── system_info.py    # Modelo de dados do sistema
-├── utils/
-│   └── formatter.py      # Formatação de saída
-└── logs/
-    ├── logger.py         # Configuração de logging
-    └── monitor.log       # Arquivo de log gerado
-```
+- Real-time CPU usage monitoring
+- RAM usage monitoring
+- Disk space monitoring
+- Battery level and charging status monitoring
+- Automatic logging with timestamps
+- Configurable alert thresholds
+- Modular architecture (each metric is an independent module)
 
 ---
 
-## Como usar
+## Requirements
 
-1. Instale as dependências:
+- Python 3.10+
+- [psutil](https://pypi.org/project/psutil/)
+
+---
+
+## Installation
 
 ```bash
-pip install psutil
+git clone https://github.com/your-username/syrixin.git
+cd syrixin
+pip install -r requirements.txt
 ```
 
-2. Execute o monitor:
+---
+
+## Usage
 
 ```bash
 python main.py
 ```
 
----
+Sample output:
 
-## Roadmap
-
-- [x] Coleta de métricas do sistema
-- [x] Sistema de logging com alertas
-- [ ] Integração com IA para análise preditiva
-- [ ] Detecção de anomalias em tempo real
-- [ ] Dashboard visual
-- [ ] Notificações inteligentes
+```
+CPU: 12.5%
+RAM: 7.82 GB / 48.8%
+Disk: 142.31 GB / 476.84 GB (29.9%)
+Battery: 87% / Charging
+```
 
 ---
 
-## Tecnologias
+## Running Tests
 
-- Python 3.x
-- psutil
-- logging (stdlib)
+```bash
+python -m unittest discover -s tests -v
+```
 
 ---
 
-*Syrixin — watching your system, so you don't have to.*
+## Project Structure
+
+```
+Syrixin/
+├── main.py               # Entry point and alert logic
+├── monitor/
+│   ├── cpu.py            # CPU data collection
+│   ├── memory.py         # RAM data collection
+│   ├── disk.py           # Disk data collection
+│   └── battery.py        # Battery data collection
+├── models/
+│   └── system_info.py    # System data model
+├── utils/
+│   └── formatter.py      # Output formatting
+├── tests/
+│   ├── test_cpu.py
+│   ├── test_memory.py
+│   ├── test_disk.py
+│   ├── test_battery.py
+│   ├── test_formatter.py
+│   ├── test_system_info.py
+│   ├── test_alerts.py
+│   └── test_failures.py
+└── logs/
+    ├── logger.py         # Logging configuration
+    └── syrixin.log       # Generated log file
+```
+
+---
+
+## Alert Thresholds
+
+| Metric  | Threshold        | Condition                          |
+|---------|------------------|------------------------------------|
+| CPU     | > 90%            | Usage exceeds 90%                  |
+| RAM     | > 85%            | Usage exceeds 85%                  |
+| Disk    | > 90%            | Disk usage exceeds 90%             |
+| Battery | < 20% unplugged  | Battery below 20% and not charging |
+| Battery | absent           | No battery detected (desktop)      |
+
+---
+
+## License
+
+MIT License — see [LICENSE](LICENSE) for details.
