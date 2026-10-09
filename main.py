@@ -7,6 +7,40 @@ from utils.formatter import format_cpu, format_ram, format_disk, format_battery
 from logs.logger import log_info, log_warning, log_error
 
 
+def collect_metrics(log_err=log_error):
+    """Collect each system metric independently, storing None on failure.
+
+    Returns a tuple (cpu, ram, disk, battery).  A failed collector stores
+    None for that metric and calls log_err with the error message; the
+    remaining collectors still run.
+    """
+    try:
+        cpu = get_cpu_use()
+    except Exception as e:
+        log_err(f"Failed to collect CPU data: {e}")
+        cpu = None
+
+    try:
+        ram = get_ram_use()
+    except Exception as e:
+        log_err(f"Failed to collect RAM data: {e}")
+        ram = None
+
+    try:
+        disk = get_disk_use()
+    except Exception as e:
+        log_err(f"Failed to collect disk data: {e}")
+        disk = None
+
+    try:
+        battery = get_battery()
+    except Exception as e:
+        log_err(f"Failed to collect battery data: {e}")
+        battery = None
+
+    return cpu, ram, disk, battery
+
+
 def check_alerts(system: SystemInfo, log_warn=log_warning) -> list[str]:
     """Verifica limites e emite avisos. Retorna lista de mensagens geradas."""
     alerts = []
@@ -47,29 +81,7 @@ def check_alerts(system: SystemInfo, log_warn=log_warning) -> list[str]:
 if __name__ == "__main__":
     log_info("Syrixin started — beginning system data collection.")
 
-    try:
-        cpu = get_cpu_use()
-    except Exception as e:
-        log_error(f"Failed to collect CPU data: {e}")
-        cpu = None
-
-    try:
-        ram = get_ram_use()
-    except Exception as e:
-        log_error(f"Failed to collect RAM data: {e}")
-        ram = None
-
-    try:
-        disk = get_disk_use()
-    except Exception as e:
-        log_error(f"Failed to collect disk data: {e}")
-        disk = None
-
-    try:
-        battery = get_battery()
-    except Exception as e:
-        log_error(f"Failed to collect battery data: {e}")
-        battery = None
+    cpu, ram, disk, battery = collect_metrics()
 
     status = battery_status(battery)
 

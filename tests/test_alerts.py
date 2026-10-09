@@ -194,28 +194,31 @@ class TestNoAlerts(unittest.TestCase):
 class TestNoneMetrics(unittest.TestCase):
 
     def test_cpu_none_does_not_raise(self):
-        """check_alerts does not raise when cpu=None; skips CPU threshold."""
+        """check_alerts does not raise when cpu=None; no CPU alert appended."""
         warn = MagicMock()
         system = _make_system_no_battery()
         system.cpu = None
         result = check_alerts(system, log_warn=warn)
         self.assertIsInstance(result, list)
+        self.assertTrue(all("CPU" not in a for a in result))
 
     def test_ram_none_does_not_raise(self):
-        """check_alerts does not raise when ram=None; skips RAM threshold."""
+        """check_alerts does not raise when ram=None; no RAM alert appended."""
         warn = MagicMock()
         system = _make_system_no_battery()
         system.ram = None
         result = check_alerts(system, log_warn=warn)
         self.assertIsInstance(result, list)
+        self.assertTrue(all("RAM" not in a for a in result))
 
     def test_disk_none_does_not_raise(self):
-        """check_alerts does not raise when disk=None; skips disk threshold."""
+        """check_alerts does not raise when disk=None; no disk alert appended."""
         warn = MagicMock()
         system = _make_system_no_battery()
         system.disk = None
         result = check_alerts(system, log_warn=warn)
         self.assertIsInstance(result, list)
+        self.assertTrue(all("Disk" not in a for a in result))
 
 
 if __name__ == "__main__":
