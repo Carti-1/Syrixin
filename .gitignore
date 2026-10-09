@@ -1,3 +1,6 @@
+# Kiro agent artifacts
+.agents/
+
 # Python
 __pycache__/
 *.py[cod]
