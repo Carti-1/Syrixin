@@ -1,0 +1,69 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Logs
+logs/*.log
+
+# IDE / editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# mypy
+.mypy_cache/
+
+# Secrets / API keys
+.env
+.env.*
+*.env
+secrets.json
+secrets.yaml
+secrets.toml
+config/secrets.*
+
+# AI / ML
+models/weights/
+models/checkpoints/
+*.pt
+*.pth
+*.onnx
+*.safetensors
+*.bin
+*.h5
+*.pkl
+
+# Jupyter (caso use para exploração)
+.ipynb_checkpoints/
+*.ipynb
+
+# Dependency lock files opcionais
+# Descomente se não quiser versionar:
+# requirements.txt
+# poetry.lock
+# Pipfile.lock
