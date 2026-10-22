@@ -1,127 +1,72 @@
-# Syrixin — Intelligent System Monitor
+# Syrixin
 
-![Python](https://img.shields.io/badge/python-3.10%2B-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+Syrixin is a lightweight system monitor that helps you check how your computer is using its resources. It displays CPU, memory, disk, and battery information in your terminal and warns you when usage reaches high levels.
 
-Syrixin is a lightweight Python system monitor that tracks CPU, RAM, disk, and battery usage in real time. It logs metrics automatically and raises configurable alerts when resources exceed defined thresholds.
+## What you can monitor
 
----
+- **CPU:** current processor usage.
+- **Memory:** percentage in use and total memory.
+- **Disk:** used and total space for the monitored drive.
+- **Battery:** charge level and whether the computer is plugged in, when battery information is available.
 
-## Features
-
-- Real-time CPU usage monitoring
-- RAM usage monitoring
-- Disk space monitoring
-- Battery level and charging status monitoring
-- Automatic logging with timestamps
-- Configurable alert thresholds
-- Modular architecture (each metric is an independent module)
-
----
+Syrixin checks these values repeatedly and refreshes the terminal display. It writes alerts and application events to `logs/syrixin.log` and saves each monitoring snapshot to a local SQLite database named `syrixin.db`. The database is created in the directory where you start the program; following the commands below creates it in the project folder. Missing or unavailable metrics are stored as empty values. The database file is excluded from Git by default.
 
 ## Requirements
 
-- Python 3.10+
-- [psutil](https://pypi.org/project/psutil/)
+- Python 3.10 or newer
+- An internet connection for the initial installation
 
----
+## Install
 
-## Installation
+Open a terminal and run:
 
 ```bash
-git clone https://github.com/your-username/syrixin.git
-cd syrixin
-pip install -r requirements.txt
+git clone https://github.com/Carti-1/Syrixin.git
+cd Syrixin
+python -m pip install -r requirements.txt
 ```
 
----
-
-## Usage
+## Start monitoring
 
 ```bash
 python main.py
 ```
 
-Sample output:
-
-```
-CPU: 12.5%
-RAM: 7.82 GB / 48.8%
-Disk: 142.31 GB / 476.84 GB (29.9%)
-Battery: 87% / Charging
-```
-
----
-
-## Continuous Monitoring
-
-Run the monitor so it refreshes automatically every N seconds:
+By default, Syrixin waits five seconds after each monitoring cycle before checking again. To use a different wait time, pass the number of seconds with `--interval`:
 
 ```bash
-# Default interval: 5 seconds
-python main.py
-
-# Custom interval: 10 seconds
 python main.py --interval 10
 ```
 
-The terminal clears each cycle and shows a timestamp header. The monitor
-updates every N seconds until you press **Ctrl+C**, at which point it exits
-gracefully and logs the stop event.
+Press **Ctrl+C** to stop monitoring.
 
----
+## Alerts
 
-## Running Tests
+The current default alerts are:
 
-```bash
-python -m unittest discover -s tests -v
-```
+| Resource | Alert condition |
+|---|---|
+| CPU | Usage is above 90% |
+| Memory | Usage is above 85% |
+| Disk | Usage is above 90% |
+| Battery | Charge is below 20% while unplugged |
 
----
+Alert thresholds are currently built into the program and cannot yet be changed from the command line. A computer without a battery may show that battery data is unavailable; CPU, memory, and disk monitoring continue independently.
 
-## Project Structure
+## Current scope
 
-```
-Syrixin/
-├── main.py               # Entry point and alert logic
-├── monitor/
-│   ├── cpu.py            # CPU data collection
-│   ├── memory.py         # RAM data collection
-│   ├── disk.py           # Disk data collection
-│   └── battery.py        # Battery data collection
-├── models/
-│   └── system_info.py    # System data model
-├── utils/
-│   └── formatter.py      # Output formatting
-├── tests/
-│   ├── test_cpu.py
-│   ├── test_memory.py
-│   ├── test_disk.py
-│   ├── test_battery.py
-│   ├── test_formatter.py
-│   ├── test_system_info.py
-│   ├── test_alerts.py
-│   ├── test_failures.py
-│   └── test_monitor.py
-└── logs/
-    ├── logger.py         # Logging configuration
-    └── syrixin.log       # Generated log file
-```
+Syrixin currently provides live monitoring, alerts, and a local history of collected measurements. It does not yet include a built-in way to browse or chart that history, AI analysis, or automatic optimization.
 
----
+## Planned features
 
-## Alert Thresholds
+The project may grow to include:
 
-| Metric  | Threshold        | Condition                          |
-|---------|------------------|------------------------------------|
-| CPU     | > 90%            | Usage exceeds 90%                  |
-| RAM     | > 85%            | Usage exceeds 85%                  |
-| Disk    | > 90%            | Disk usage exceeds 90%             |
-| Battery | < 20% unplugged  | Battery below 20% and not charging |
-| Battery | absent           | No battery detected (desktop)      |
+- Tools to browse past measurements and spot trends.
+- AI-assisted explanations and recommendations based on the collected data.
+- Specific optimization actions, explained to the user and performed only with their approval.
 
----
+These are future ideas, not features available in the current version. Their scope and order may change as the project develops.
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+Syrixin is available under the MIT License. See [LICENSE](LICENSE) for details.

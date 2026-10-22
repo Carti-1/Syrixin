@@ -10,6 +10,7 @@ from monitor.battery import get_battery, battery_status
 from models.system_info import SystemInfo
 from utils.formatter import format_cpu, format_ram, format_disk, format_battery, display
 from logs.logger import log_info, log_warning, log_error
+from storage.database import Database
 
 
 def collect_metrics(log_err=log_error, _battery_status=battery_status):
@@ -50,7 +51,7 @@ def collect_metrics(log_err=log_error, _battery_status=battery_status):
 
 
 def check_alerts(system: SystemInfo, log_warn=log_warning) -> list[str]:
-    """Verifica limites e emite avisos. Retorna lista de mensagens geradas.
+    """Verify limits & send warnings. Return list of generated messages.
 
     Each metric is formatted only when its threshold is exceeded,
     avoiding unnecessary work when all values are within normal range.
@@ -84,7 +85,6 @@ def check_alerts(system: SystemInfo, log_warn=log_warning) -> list[str]:
 
     return alerts
 
-
 def run_monitor(
     interval: int = 5,
     _collect=None,
@@ -106,8 +106,9 @@ def run_monitor(
     )
     _battery_status  = _battery_status  if _battery_status  is not None else battery_status
 
-    log_info("Syrixin started — beginning system data collection.")
+    database = Database("syrixin.db")
     try:
+        log_info("Syrixin started — beginning system data collection.")
         while True:
             try:
                 _clear()
@@ -120,6 +121,7 @@ def run_monitor(
 
                 display(system)
                 _check(system)
+                database.save(system)
 
                 _sleep(interval)
             except KeyboardInterrupt:
@@ -129,6 +131,9 @@ def run_monitor(
                 _sleep(interval)
     except KeyboardInterrupt:
         log_info("Monitor stopped by user.")
+
+    finally:
+        database.close()
 
 
 if __name__ == "__main__":
