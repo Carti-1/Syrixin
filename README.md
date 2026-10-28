@@ -9,7 +9,7 @@ Syrixin is a lightweight system monitor that helps you check how your computer i
 - **Disk:** used and total space for the monitored drive.
 - **Battery:** charge level and whether the computer is plugged in, when battery information is available.
 
-Syrixin checks these values repeatedly and refreshes the terminal display. It writes alerts and application events to `logs/syrixin.log` and saves each monitoring snapshot to a local SQLite database named `syrixin.db`. The database is created in the directory where you start the program; following the commands below creates it in the project folder. Missing or unavailable metrics are stored as empty values. The database file is excluded from Git by default.
+Syrixin checks these values repeatedly and refreshes the terminal display. It writes alerts and application events to `logs/syrixin.log` and saves each monitoring snapshot to a local SQLite database named `syrixin.db`. The database is created in the directory where you start the program; following the commands below creates it in the project folder. Missing or unavailable metrics are stored as `NULL` (no value). The database file is excluded from Git by default.
 
 ## Requirements
 
