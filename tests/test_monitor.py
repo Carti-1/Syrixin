@@ -108,9 +108,6 @@ class TestRunMonitor(unittest.TestCase):
 
         fake_status.assert_called_once()
 
-    # ------------------------------------------------------------------
-    # Problem 2 — non-KeyboardInterrupt exceptions are logged; loop continues
-    # ------------------------------------------------------------------
 
     def test_unexpected_exception_is_logged_and_loop_continues(self):
         """An OSError mid-cycle is caught, logged via log_error, and the loop continues."""
@@ -125,6 +122,7 @@ class TestRunMonitor(unittest.TestCase):
                         _sleep=sleep, _clear=MagicMock())
 
         mock_log_err.assert_any_call("Unexpected error during monitoring cycle: boom")
+
 
     def test_loop_does_not_exit_on_first_exception(self):
         """run_monitor keeps running after an exception; collect is called again."""
@@ -142,9 +140,6 @@ class TestRunMonitor(unittest.TestCase):
 
         self.assertEqual(collect.call_count, 2)
 
-    # ------------------------------------------------------------------
-    # Problem 3 — header/timestamp print has test coverage
-    # ------------------------------------------------------------------
 
     def test_header_print_contains_monitor_label(self):
         """run_monitor prints a header containing 'Syrixin Monitor' each cycle."""
@@ -164,10 +159,6 @@ class TestRunMonitor(unittest.TestCase):
         )
 
 
-    # ------------------------------------------------------------------
-    # Interval validation — sleep is called even after an error cycle
-    # ------------------------------------------------------------------
-
     def test_sleep_called_after_exception_cycle(self):
         """_sleep is called even when the cycle raises, preventing log storms."""
         collect = MagicMock(side_effect=[
@@ -186,6 +177,28 @@ class TestRunMonitor(unittest.TestCase):
         for call in sleep.call_args_list:
             self.assertEqual(call.args[0], 3)
 
+    def setUp(self):
+        """ avoid creating syrixin.db """
+        database_patch = patch("main.Database")
+        self.addCleanup(database_patch.stop)
+        self.mock_database_class = database_patch.start()
+        self.mock_database = self.mock_database_class.return_value
+
+    def test_database_saves_each_cycle_and_closes(self):
+        collect = _make_collect()
+        sleep = _sleep_raises_after(3)
+
+        with patch("main.log_info"), patch("main.display"):
+            run_monitor(
+                interval=1,
+                _collect=collect,
+                _check=MagicMock(return_value=[]),
+                _sleep=sleep,
+                _clear=MagicMock(),
+            )
+
+        self.assertEqual(self.mock_database.save.call_count, 3)
+        self.mock_database.close.assert_called_once()
 
 if __name__ == "__main__":
     unittest.main()
