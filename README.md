@@ -40,6 +40,22 @@ python main.py --interval 10
 
 Press **Ctrl+C** to stop monitoring.
 
+## View recent history
+
+After Syrixin has saved some monitoring snapshots, you can view the ten most recent records with:
+
+```bash
+python main.py --history
+```
+
+To choose how many records to display, pass a positive number:
+
+```bash
+python main.py --history 25
+```
+
+The history includes the timestamp and available CPU, memory, disk, and battery measurements. Unavailable values appear as `N/A`.
+
 ## Alerts
 
 The current default alerts are:
@@ -55,13 +71,13 @@ Alert thresholds are currently built into the program and cannot yet be changed 
 
 ## Current scope
 
-Syrixin currently provides live monitoring, alerts, and a local history of collected measurements. It does not yet include a built-in way to browse or chart that history, AI analysis, or automatic optimization.
+Syrixin currently provides live monitoring, alerts, and a command-line view of locally saved measurements. It does not yet include charts, AI analysis, or automatic optimization.
 
 ## Planned features
 
 The project may grow to include:
 
-- Tools to browse past measurements and spot trends.
+- Charts that make it easier to spot trends in past measurements.
 - AI-assisted explanations and recommendations based on the collected data.
 - Specific optimization actions, explained to the user and performed only with their approval.
 
