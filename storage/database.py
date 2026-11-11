@@ -66,4 +66,24 @@ class Database:
 
     def close(self):
         self.connection.close()
+
+    def get_recent(self, limit=10):
+        if limit < 1:
+            raise ValueError("limit must be at least 1")
+
+        rows = self.connection.execute(
+            """
+            SELECT
+                timestamp, cpu, ram_total, ram_pct,
+                disk_used, disk_total, disk_pct,
+                battery_pct, power_plugged
+            FROM metrics
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+
+        return rows
+            
     

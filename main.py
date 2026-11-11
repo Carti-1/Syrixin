@@ -8,7 +8,14 @@ from monitor.memory import get_ram_use
 from monitor.disk import get_disk_use
 from monitor.battery import get_battery, battery_status
 from models.system_info import SystemInfo
-from utils.formatter import format_cpu, format_ram, format_disk, format_battery, display
+from utils.formatter import (
+    format_cpu,
+    format_ram,
+    format_disk,
+    format_battery,
+    format_history,
+    display,
+)
 from logs.logger import log_info, log_warning, log_error
 from storage.database import Database
 
@@ -136,13 +143,36 @@ def run_monitor(
         database.close()
 
 
+def show_history(limit: int = 10) -> None:
+    """Print the most recent saved metric records and close the database."""
+    database = Database("syrixin.db")
+    try:
+        rows = database.get_recent(limit)
+        print(format_history(rows))
+    finally:
+        database.close()
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Syrixin system monitor")
     parser.add_argument(
         "--interval", type=int, default=5,
         help="Refresh interval in seconds (default: 5, minimum: 1)"
     )
+    parser.add_argument(
+        "--history",
+        nargs="?",
+        const=10,
+        type=int,
+        metavar="N",
+        help="Show the latest N saved metric records (default: 10)",
+    )
     args = parser.parse_args()
     if args.interval < 1:
         parser.error("--interval must be a positive integer (minimum: 1)")
-    run_monitor(interval=args.interval)
+    if args.history is not None:
+        if args.history < 1:
+            parser.error("--history must be a positive integer (minimum: 1)")
+        show_history(limit=args.history)
+    else:
+        run_monitor(interval=args.interval)
