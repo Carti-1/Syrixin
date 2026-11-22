@@ -3,7 +3,13 @@
 import unittest
 from types import SimpleNamespace
 
-from utils.formatter import format_cpu, format_ram, format_disk, format_battery
+from utils.formatter import (
+    format_cpu,
+    format_ram,
+    format_disk,
+    format_battery,
+    format_history,
+)
 
 
 def _ram(total_gb, percent):
@@ -84,6 +90,46 @@ class TestFormatBattery(unittest.TestCase):
 
     def test_no_battery_returns_na(self):
         self.assertEqual(format_battery(None, None), "N/A")
+
+
+class TestFormatHistory(unittest.TestCase):
+
+    def test_empty_rows_returns_friendly_message(self):
+        self.assertEqual(
+            format_history([]),
+            "Nenhum registro de métricas encontrado.",
+        )
+
+    def test_formats_all_metrics(self):
+        row = (
+            "2026-11-11T12:00:00+00:00",
+            42.5,
+            8 * (1024 ** 3),
+            50.0,
+            100 * (1024 ** 3),
+            500 * (1024 ** 3),
+            20.0,
+            80.0,
+            1,
+        )
+
+        result = format_history([row])
+
+        self.assertIn("2026-11-11T12:00:00+00:00", result)
+        self.assertIn("CPU: 42.5%", result)
+        self.assertIn("RAM: 8.00 GB / 4.00 GB (50.0%)", result)
+        self.assertIn("Disco: 100.00 GB / 500.00 GB (20.0%)", result)
+        self.assertIn("Bateria: 80.0% (conectado à energia)", result)
+
+    def test_missing_metrics_are_shown_as_na(self):
+        row = ("2026-11-11T12:00:00+00:00", None, None, None, None, None, None, None, None)
+
+        result = format_history([row])
+
+        self.assertIn("CPU: N/A", result)
+        self.assertIn("RAM: N/A / N/A (N/A)", result)
+        self.assertIn("Disco: N/A / N/A (N/A)", result)
+        self.assertIn("Bateria: N/A (energia: N/A)", result)
 
 
 if __name__ == "__main__":

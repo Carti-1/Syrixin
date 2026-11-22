@@ -3,51 +3,20 @@ import os
 import datetime
 import argparse
 
-from monitor.cpu import get_cpu_use
-from monitor.memory import get_ram_use
-from monitor.disk import get_disk_use
-from monitor.battery import get_battery, battery_status
+from monitor.battery import battery_status
 from models.system_info import SystemInfo
-from utils.formatter import format_cpu, format_ram, format_disk, format_battery, display
+from utils.formatter import (
+    format_cpu,
+    format_ram,
+    format_disk,
+    format_battery,
+    format_history,
+    display,
+)
 from logs.logger import log_info, log_warning, log_error
 from storage.database import Database
+from services.monitoring import collect_metrics
 
-
-def collect_metrics(log_err=log_error, _battery_status=battery_status):
-    """Collect each system metric independently, storing None on failure.
-
-    Returns a tuple (cpu, ram, disk, battery).  A failed collector stores
-    None for that metric and calls log_err with the error message; the
-    remaining collectors still run.
-
-    _battery_status is accepted but not called here; it exists so callers
-    that inject collect_metrics can also inject battery_status for testing.
-    """
-    try:
-        cpu = get_cpu_use()
-    except Exception as e:
-        log_err(f"Failed to collect CPU data: {e}")
-        cpu = None
-
-    try:
-        ram = get_ram_use()
-    except Exception as e:
-        log_err(f"Failed to collect RAM data: {e}")
-        ram = None
-
-    try:
-        disk = get_disk_use()
-    except Exception as e:
-        log_err(f"Failed to collect disk data: {e}")
-        disk = None
-
-    try:
-        battery = get_battery()
-    except Exception as e:
-        log_err(f"Failed to collect battery data: {e}")
-        battery = None
-
-    return cpu, ram, disk, battery
 
 
 def check_alerts(system: SystemInfo, log_warn=log_warning) -> list[str]:
@@ -136,13 +105,36 @@ def run_monitor(
         database.close()
 
 
+def show_history(limit: int = 10) -> None:
+    """Print the most recent saved metric records and close the database."""
+    database = Database("syrixin.db")
+    try:
+        rows = database.get_recent(limit)
+        print(format_history(rows))
+    finally:
+        database.close()
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Syrixin system monitor")
     parser.add_argument(
         "--interval", type=int, default=5,
         help="Refresh interval in seconds (default: 5, minimum: 1)"
     )
+    parser.add_argument(
+        "--history",
+        nargs="?",
+        const=10,
+        type=int,
+        metavar="N",
+        help="Show the latest N saved metric records (default: 10)",
+    )
     args = parser.parse_args()
     if args.interval < 1:
         parser.error("--interval must be a positive integer (minimum: 1)")
-    run_monitor(interval=args.interval)
+    if args.history is not None:
+        if args.history < 1:
+            parser.error("--history must be a positive integer (minimum: 1)")
+        show_history(limit=args.history)
+    else:
+        run_monitor(interval=args.interval)

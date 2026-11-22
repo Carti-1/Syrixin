@@ -1,15 +1,18 @@
 # Syrixin
 
-Syrixin is a lightweight system monitor that helps you check how your computer is using its resources. It displays CPU, memory, disk, and battery information in your terminal and warns you when usage reaches high levels.
+Syrixin is a lightweight system monitor that helps you check how your computer is using its resources. It offers a desktop window with live metric cards and a CPU usage chart, as well as a terminal mode and alerts.
 
 ## What you can monitor
 
 - **CPU:** current processor usage.
-- **Memory:** percentage in use and total memory.
+- **CPU temperature:** current temperature when the computer exposes a supported sensor.
+- **Memory:** total capacity, percentage in use, and estimated physical memory in use.
 - **Disk:** used and total space for the monitored drive.
 - **Battery:** charge level and whether the computer is plugged in, when battery information is available.
 
-Syrixin checks these values repeatedly and refreshes the terminal display. It writes alerts and application events to `logs/syrixin.log` and saves each monitoring snapshot to a local SQLite database named `syrixin.db`. The database is created in the directory where you start the program; following the commands below creates it in the project folder. Missing or unavailable metrics are stored as `NULL` (no value). The database file is excluded from Git by default.
+Syrixin checks these values repeatedly and refreshes the display. It writes alerts and application events to `logs/syrixin.log` and saves each monitoring snapshot to a local SQLite database named `syrixin.db`. The database is created in the directory where you start the program; following the commands below creates it in the project folder. Missing or unavailable metrics are stored as `NULL` (no value). The database file is excluded from Git by default.
+
+On Windows, CPU temperature may require [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) to be running. If the sensor is not available, Syrixin continues normally and shows `N/A` for temperature.
 
 ## Requirements
 
@@ -28,6 +31,16 @@ python -m pip install -r requirements.txt
 
 ## Start monitoring
 
+To open the desktop window:
+
+```bash
+python -m ui.app
+```
+
+The desktop cards and CPU graph refresh about once per second. To keep the local database from growing too quickly, snapshots are saved every five seconds. The graph hides clock-time labels. The **Logs** tab shows recent application events, and **Assistente IA** outlines planned capabilities; AI features are not connected yet.
+
+To use the terminal monitor instead:
+
 ```bash
 python main.py
 ```
@@ -39,6 +52,22 @@ python main.py --interval 10
 ```
 
 Press **Ctrl+C** to stop monitoring.
+
+## View recent history
+
+After Syrixin has saved some monitoring snapshots, you can view the ten most recent records with:
+
+```bash
+python main.py --history
+```
+
+To choose how many records to display, pass a positive number:
+
+```bash
+python main.py --history 25
+```
+
+The history includes the timestamp and available CPU, CPU temperature, memory, disk, and battery measurements. Unavailable values appear as `N/A`.
 
 ## Alerts
 
@@ -55,13 +84,12 @@ Alert thresholds are currently built into the program and cannot yet be changed 
 
 ## Current scope
 
-Syrixin currently provides live monitoring, alerts, and a local history of collected measurements. It does not yet include a built-in way to browse or chart that history, AI analysis, or automatic optimization.
+Syrixin currently provides live desktop and terminal monitoring, alerts, a CPU usage chart, and a command-line view of locally saved measurements. It does not yet include AI analysis or automatic optimization.
 
 ## Planned features
 
 The project may grow to include:
 
-- Tools to browse past measurements and spot trends.
 - AI-assisted explanations and recommendations based on the collected data.
 - Specific optimization actions, explained to the user and performed only with their approval.
 

@@ -129,6 +129,46 @@ class TestDatabase(unittest.TestCase):
         self.assertIsNotNone(parsed_timestamp.tzinfo)
         self.assertEqual(parsed_timestamp.utcoffset(), timedelta(0))
 
+    def test_get_recent_respects_limit_and_returns_newest_first(self):
+        db = Database(":memory:")
+
+        try:
+            for cpu in (10.0, 20.0, 30.0):
+                system = SystemInfo(
+                    cpu=cpu,
+                    ram=None,
+                    disk=None,
+                    battery=None,
+                    battery_status=None,
+                )
+                db.save(system)
+
+            rows = db.get_recent(limit=2)
+        finally:
+            db.close()
+
+        self.assertEqual(len(rows), 2)
+        self.assertEqual([row[1] for row in rows], [30.0, 20.0])
+
+    def test_get_recent_returns_empty_list_when_no_records_exist(self):
+        db = Database(":memory:")
+
+        try:
+            rows = db.get_recent()
+        finally:
+            db.close()
+
+        self.assertEqual(rows, [])
+
+    def test_get_recent_rejects_limit_below_one(self):
+        db = Database(":memory:")
+
+        try:
+            with self.assertRaises(ValueError):
+                db.get_recent(limit=0)
+        finally:
+            db.close()
+
 
 if __name__ == "__main__":
     unittest.main()
