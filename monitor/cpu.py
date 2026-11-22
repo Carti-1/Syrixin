@@ -1,5 +1,37 @@
 import psutil
 
+
+def _get_temperature_from_lhm():
+    from services.hardware import get_hardware_inventory
+
+    for component in get_hardware_inventory():
+        component_name = component["name"].lower()
+        for sensor in component["sensors"]:
+            sensor_name = sensor["name"].lower()
+            cpu_sensor = (
+                "cpu" in component_name
+                or "processor" in component_name
+                or any(token in sensor_name for token in ("cpu", "tctl", "tdie"))
+            )
+            if sensor["type"].lower() == "temperature" and cpu_sensor:
+                value = sensor["value"]
+                if isinstance(value, (int, float)):
+                    return float(value)
+    return None
+
+
+def _get_temperature_from_legacy_wmi():
+    """Support older LibreHardwareMonitor versions that still expose WMI."""
+    import wmi
+
+    monitor = wmi.WMI(namespace="root\\LibreHardwareMonitor")
+    for sensor in monitor.Sensor():
+        name = sensor.Name or ""
+        value = sensor.Value
+        if sensor.SensorType == "Temperature" and "cpu" in name.lower() and value is not None:
+            return float(value)
+    return None
+
 def get_cpu_temperature():
     """Return a CPU temperature in Celsius, or None when unavailable.
 
@@ -21,21 +53,20 @@ def get_cpu_temperature():
             # Windows and some hardware need a separate sensor provider.
             pass
 
-    # Optional Windows integration: requires LibreHardwareMonitor running with
-    # its WMI support enabled, plus the small `wmi` Python package.
+    # Current LibreHardwareMonitor versions expose their sensors over localhost.
     try:
-        import wmi
-
-        monitor = wmi.WMI(namespace="root\\LibreHardwareMonitor")
-        for sensor in monitor.Sensor():
-            name = sensor.Name or ""
-            if sensor.SensorType == "Temperature" and "cpu" in name.lower():
-                value = sensor.Value
-                if value is not None:
-                    return float(value)
+        temperature = _get_temperature_from_lhm()
+        if temperature is not None:
+            return temperature
     except Exception:
-        # Missing tool, missing WMI namespace, or unavailable sensor is normal.
-        return None
+        # Older LHM versions used WMI instead of the current HTTP endpoint.
+        pass
+
+    try:
+        return _get_temperature_from_legacy_wmi()
+    except Exception:
+        # Missing tool, missing endpoint, or unavailable sensor is normal.
+        pass
     return None
 
 def get_cpu_use(interval=1):

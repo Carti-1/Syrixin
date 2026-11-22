@@ -12,7 +12,9 @@ Syrixin is a lightweight system monitor that helps you check how your computer i
 
 Syrixin checks these values repeatedly and refreshes the display. It writes alerts and application events to `logs/syrixin.log` and saves each monitoring snapshot to a local SQLite database named `syrixin.db`. The database is created in the directory where you start the program; following the commands below creates it in the project folder. Missing or unavailable metrics are stored as `NULL` (no value). The database file is excluded from Git by default.
 
-On Windows, CPU temperature may require [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) to be running. If the sensor is not available, Syrixin continues normally and shows `N/A` for temperature.
+On Windows, CPU temperature and the Hardware tab can use [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor), which must be running with **Options → Remote Web Server → Run** enabled. Syrixin reads its local endpoint at `127.0.0.1:8085/data.json`; if the endpoint or a sensor is unavailable, the rest of monitoring continues.
+
+LibreHardwareMonitor is a separate Windows application, not a Python package, so it is not installed by `requirements.txt`. Users who need these readings must download and start it separately.
 
 ## Requirements
 
@@ -37,7 +39,7 @@ To open the desktop window:
 python -m ui.app
 ```
 
-The desktop cards and CPU graph refresh about once per second. To keep the local database from growing too quickly, snapshots are saved every five seconds. The graph hides clock-time labels. The **Logs** tab shows recent application events, and **Assistente IA** outlines planned capabilities; AI features are not connected yet.
+The desktop cards refresh about once per second. The CPU card includes a compact graph of recent usage, while the memory, disk, and battery cards use visual indicators that reflect their current readings. To keep the local database from growing too quickly, snapshots are saved every five seconds. The **Hardware** tab lists components and sensor readings exposed by LibreHardwareMonitor. The **Logs** tab shows recent application events, and **Assistente IA** outlines planned capabilities; AI features are not connected yet.
 
 To use the terminal monitor instead:
 
