@@ -117,7 +117,7 @@ class TestFormatHistory(unittest.TestCase):
 
         self.assertIn("2026-11-11T12:00:00+00:00", result)
         self.assertIn("CPU: 42.5%", result)
-        self.assertIn("RAM: 8.00 GB total (50.0%)", result)
+        self.assertIn("RAM: 8.00 GB / 4.00 GB (50.0%)", result)
         self.assertIn("Disco: 100.00 GB / 500.00 GB (20.0%)", result)
         self.assertIn("Bateria: 80.0% (conectado à energia)", result)
 
@@ -127,7 +127,7 @@ class TestFormatHistory(unittest.TestCase):
         result = format_history([row])
 
         self.assertIn("CPU: N/A", result)
-        self.assertIn("RAM: N/A total (N/A)", result)
+        self.assertIn("RAM: N/A / N/A (N/A)", result)
         self.assertIn("Disco: N/A / N/A (N/A)", result)
         self.assertIn("Bateria: N/A (energia: N/A)", result)
 
