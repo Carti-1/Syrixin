@@ -16,9 +16,12 @@ from utils.formatter import (
     format_disk,
     format_ram,
 )
+from logs.logger import log_error
 
 from PySide6.QtCore import QThread
 from ui.metrics_worker import MetricsWorker
+
+from services.history import MetricsHistoryService
 
 
 class SyrixinWindow(QMainWindow):
@@ -34,8 +37,6 @@ class SyrixinWindow(QMainWindow):
         title = QLabel("Syrixin")
         title.setStyleSheet("font-size: 24px; font-weight: bold;")
 
-        self.status_label = QLabel("Coletando métricas...")
-
         self.cpu_card = MetricCard("CPU")
         self.memory_card = MetricCard("Memória")
         self.disk_card = MetricCard("Disco")
@@ -48,20 +49,20 @@ class SyrixinWindow(QMainWindow):
         metrics_grid.addWidget(self.battery_card, 1, 1)
 
         layout.addWidget(title)
-        layout.addWidget(self.status_label)
         layout.addLayout(metrics_grid)
 
         self.setCentralWidget(central_widget)
+
+        self.history_service = MetricsHistoryService()
 
         self.metrics_thread = QThread(self)
         self.metrics_worker = MetricsWorker()
         self.metrics_worker.moveToThread(self.metrics_thread)
 
-        self.metrics_thread.started.connect(self.metrics_worker.run)
+        self.metrics_thread.started.connect(self.metrics_worker.start)
         self.metrics_worker.completed.connect(self.display_system_info)
-        self.metrics_worker.failed.connect(self.show_collection_error)
-        self.metrics_worker.finished.connect(self.metrics_thread.quit)
-        self.metrics_worker.finished.connect(self.metrics_worker.deleteLater)
+        self.metrics_worker.failed.connect(self.log_collection_error)
+        self.metrics_thread.finished.connect(self.metrics_worker.deleteLater)
 
         self.metrics_thread.start()
 
@@ -78,15 +79,19 @@ class SyrixinWindow(QMainWindow):
             format_disk(system.disk),
             format_battery(system.battery, system.battery_status),
         )
-        self.status_label.setText("Métricas atualizadas")
+        try:
+            self.history_service.save_snapshot(system)
+        except Exception as error:
+            log_error(f"Failed to save desktop metrics: {error}")
 
-    def show_collection_error(self, message):
-        self.status_label.setText(f"Falha ao coletar métricas: {message}")
+    def log_collection_error(self, message):
+        log_error(f"Failed to collect desktop metrics: {message}")
 
     def closeEvent(self, event):
         if self.metrics_thread.isRunning():
             self.metrics_thread.quit()
             self.metrics_thread.wait()
+        self.history_service.close()
         event.accept()
 
 class MetricCard(QFrame):
