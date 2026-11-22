@@ -7,7 +7,7 @@ class MetricsWorker(QObject):
     completed = Signal(object)
     failed = Signal(str)
 
-    def __init__(self, interval_ms=5000):
+    def __init__(self, interval_ms=1000):
         super().__init__()
         self.interval_ms = interval_ms
         self.timer = None
