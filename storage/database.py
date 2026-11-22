@@ -12,6 +12,7 @@ class Database:
                 cpu REAL,
                 ram_total INTEGER,
                 ram_pct REAL,
+                ram_used INTEGER,
                 disk_used INTEGER,
                 disk_total INTEGER,
                 disk_pct REAL,
@@ -20,15 +21,39 @@ class Database:
             )
 
         
-        """)    
+        """)
 
         self.connection.commit()
+
+        # Add the field to existing databases without deleting their history.
+        columns = {
+            row[1] for row in self.connection.execute("PRAGMA table_info(metrics)")
+        }
+        if "cpu_temp" not in columns:
+            self.connection.execute("ALTER TABLE metrics ADD COLUMN cpu_temp REAL")
+            self.connection.commit()
+            columns = {
+                row[1] for row in self.connection.execute("PRAGMA table_info(metrics)")
+            }
+        if "ram_used" not in columns:
+            self.connection.execute("ALTER TABLE metrics ADD COLUMN ram_used INTEGER")
+            self.connection.commit()
     
     def save(self, system):
         timestamp = datetime.now(timezone.utc).isoformat()
 
         ram_total = system.ram.total if system.ram is not None else None
         ram_pct = system.ram.percent if system.ram is not None else None
+        ram_available = getattr(system.ram, "available", None)
+        if ram_total is None:
+            ram_used = None
+        elif ram_available is not None:
+            ram_used = ram_total - ram_available
+        elif ram_pct is not None:
+            # Compatibility for older/custom metric objects without available.
+            ram_used = round(ram_total * ram_pct / 100)
+        else:
+            ram_used = None
 
         disk_used = system.disk.used if system.disk is not None else None
         disk_total = system.disk.total if system.disk is not None else None
@@ -46,9 +71,9 @@ class Database:
             INSERT INTO metrics (
                 timestamp, cpu, ram_total, ram_pct,
                 disk_used, disk_total, disk_pct,
-                battery_pct, power_plugged
+                battery_pct, power_plugged, cpu_temp, ram_used
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 timestamp,
@@ -60,6 +85,8 @@ class Database:
                 disk_pct,
                 battery_pct,
                 power_plugged,
+                system.cpu_temp,
+                ram_used,
             ),
         )
         self.connection.commit()
@@ -76,7 +103,7 @@ class Database:
             SELECT
                 timestamp, cpu, ram_total, ram_pct,
                 disk_used, disk_total, disk_pct,
-                battery_pct, power_plugged
+                battery_pct, power_plugged, cpu_temp, ram_used
             FROM metrics
             ORDER BY id DESC
             LIMIT ?
@@ -85,5 +112,3 @@ class Database:
         ).fetchall()
 
         return rows
-            
-    
